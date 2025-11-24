@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>User Registration</title>
+
+  <!-- ✅ Bootstrap 5 CDN -->
+  <link href="/css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- ✅ Your custom CSS (optional for extra styles) -->
+  <link href="/custom_css/userlogin.css" rel="stylesheet">
+</head>
+
+<body class="bg-light">
+  <div class="container vh-100 d-flex align-items-center justify-content-center">
+    <div class="card shadow-lg border-0 w-100" style="max-width: 450px;">
+      <div class="card-body p-4">
+        <h3 class="text-center mb-4 text-primary">User Registration</h3>
+
+        <form th:action="@{/saveuser}" method="post" th:object="${User}">
+          <!-- Name -->
+          <div class="mb-3">
+            <label class="form-label">Full Name</label>
+            <input type="text" class="form-control" th:field="*{uname}" placeholder="Enter your name" required>
+          </div>
+          <!-- Password -->
+          <div class="mb-3">
+            <label class="form-label">Password</label>
+            <input type="password" class="form-control" th:field="*{upassword}" placeholder="Enter password" required>
+          </div>
+
+          <!-- Re-enter Password -->
+          <div class="mb-3">
+            <label class="form-label">Re-enter Password</label>
+            <input type="password" class="form-control" placeholder="Re-enter password" required>
+          </div>
+
+          <!-- Email -->
+          <div class="mb-3">
+            <label class="form-label">Email Address</label>
+            <input type="email" class="form-control" th:field="*{umail}" placeholder="Enter email" required>
+          </div>
+
+          <!-- Mobile -->
+          <div class="mb-4">
+            <label class="form-label">Mobile Number</label>
+            <input type="tel" class="form-control" th:field="*{mobile}" placeholder="Enter mobile number" required>
+          </div>
+
+          <!-- Submit -->
+		  <div class="d-flex justify-content-between">
+		    <button type="submit" class="btn btn-primary btn-lg w-50 me-2">Register</button>
+		    <a href="userlogin" class="btn btn-outline-primary btn-lg w-50">Login</a>
+		  </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ✅ Bootstrap JS (for future interactivity, optional) -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

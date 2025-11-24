@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Admin Dashboard - Smart City HYD</title>
+
+    <link href="/css/bootstrap.min.css" rel="stylesheet">
+    <script src="/js/bootstrap.bundle.min.js"></script>
+
+    <style>
+        body {
+            background: linear-gradient(to bottom right, #eef2f3, #8e9eab);
+            min-height: 100vh;
+        }
+        .dashboard-card {
+            border-radius: 18px;
+            overflow: hidden;
+            transition: 0.3s ease;
+            cursor: pointer;
+        }
+        .dashboard-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+        }
+        .dashboard-card img {
+            height: 170px;
+            object-fit: cover;
+            width: 100%;
+        }
+        .title-text {
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+    </style>
+</head>
+
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar navbar-dark bg-dark shadow-sm mb-4">
+    <div class="container">
+        <a class="navbar-brand fw-bold text-uppercase">Smart City HYD - Admin</a>
+        <a class="btn btn-outline-light btn-sm" href="/userlogin">Logout</a>
+    </div>
+</nav>
+
+<div class="container">
+
+    <h2 class="text-center text-dark mb-4 title-text">Admin Dashboard</h2>
+
+    <div class="row g-4">
+
+        <!-- DASHBOARD CARDS LOOP -->
+        <div class="col-md-4" >
+            <a th:href="@{/admin/hotels}" class="text-decoration-none text-dark">
+                <div class="card dashboard-card shadow">
+                    <img src="/images/hotel.jpg">
+                    <div class="card-body text-center">
+                        <h5 class="fw-bold">Hotels</h5>
+                        <p th:text="${hotelCount} + ' Records'">0 Records</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-md-4">
+            <a th:href="@{/admin/restaurants}" class="text-decoration-none text-dark">
+                <div class="card dashboard-card shadow">
+                    <img src="/images/restaurant.jpg">
+                    <div class="card-body text-center">
+                        <h5 class="fw-bold">Restaurants</h5>
+                        <p th:text="${restaurantCount} + ' Records'">0 Records</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-md-4">
+            <a th:href="@{/admin/pgs}" class="text-decoration-none text-dark">
+                <div class="card dashboard-card shadow">
+                    <img src="/images/pg.jpg">
+                    <div class="card-body text-center">
+                        <h5 class="fw-bold">PG Accommodations</h5>
+                        <p th:text="${pgCount} + ' Records'">0 Records</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-md-4">
+            <a th:href="@{/admin/tourist-places}" class="text-decoration-none text-dark">
+                <div class="card dashboard-card shadow">
+                    <img src="/images/tourist.jpg">
+                    <div class="card-body text-center">
+                        <h5 class="fw-bold">Tourist Places</h5>
+                        <p th:text="${touristCount} + ' Records'">0 Records</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-md-4">
+            <a th:href="@{/admin/business-venues}" class="text-decoration-none text-dark">
+                <div class="card dashboard-card shadow">
+                    <img src="/images/business.jpg">
+                    <div class="card-body text-center">
+                        <h5 class="fw-bold">Business Venues</h5>
+                        <p th:text="${businessCount} + ' Records'">0 Records</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-md-4">
+            <a th:href="@{/admin/colleges}" class="text-decoration-none text-dark">
+                <div class="card dashboard-card shadow">
+                    <img src="/images/college.jpg">
+                    <div class="card-body text-center">
+                        <h5 class="fw-bold">Colleges</h5>
+                        <p th:text="${collegeCount} + ' Records'">0 Records</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+    </div>
+
+</div>
+
+</body>
+</html>

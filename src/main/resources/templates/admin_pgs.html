@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <title>Admin - PG Accommodations</title>
+  <link href="/css/bootstrap.min.css" rel="stylesheet">
+  <script src="/js/bootstrap.bundle.min.js"></script>
+</head>
+<body class="bg-light">
+
+<div class="container py-4">
+
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h3>PG / Accommodations (Admin)</h3>
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addPgModal">Add PG</button>
+  </div>
+
+  <form class="row g-2 mb-3" th:action="@{/admin/pgs}" method="get">
+    <div class="col-auto">
+      <input type="text" name="q" placeholder="Search name or location" class="form-control" th:value="${q}">
+    </div>
+    <div class="col-auto">
+      <button class="btn btn-outline-primary">Search</button>
+    </div>
+  </form>
+
+  <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
+  <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
+
+  <div class="table-responsive">
+    <table class="table table-hover align-middle">
+      <thead>
+        <tr>
+          <th>Image</th>
+          <th>Name</th>
+          <th>Location</th>
+          <th>Rating</th>
+          <th>Created</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr th:each="p : ${pgsPage.content}">
+          <td style="width:130px">
+            <img th:src="@{'/pg/image/' + ${p.id}}" style="width:120px;height:80px;object-fit:cover;border-radius:6px;">
+          </td>
+          <td th:text="${p.name}"></td>
+          <td th:text="${p.location}"></td>
+          <td>⭐ <span th:text="${p.rating}"></span></td>
+          <td th:text="${#temporals.format(p.createdAt, 'dd-MMM-yyyy HH:mm')}"></td>
+          <td>
+            <a th:href="@{'/admin/pgs/edit/' + ${p.id}}" class="btn btn-sm btn-outline-secondary">Edit</a>
+            <button class="btn btn-sm btn-danger"
+              data-bs-toggle="modal"
+              data-bs-target="#confirmDeleteModal"
+              th:attr="data-id=${p.id}, data-name=${p.name}">
+              Delete
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <nav th:if="${pgsPage.totalPages > 1}">
+    <ul class="pagination">
+      <li class="page-item" th:classappend="${pgPage.first}? 'disabled'">
+        <a class="page-link" th:href="@{/admin/pgs(page=${pgPage.number - 1}, q=${q})}">Prev</a>
+      </li>
+      <li class="page-item"
+        th:each="p : ${#numbers.sequence(0, pgPage.totalPages - 1)}"
+        th:classappend="${p == pgPage.number}? 'active'">
+        <a class="page-link" th:href="@{/admin/pgs(page=${p}, q=${q})}" th:text="${p + 1}"></a>
+      </li>
+      <li class="page-item" th:classappend="${pgPage.last}? 'disabled'">
+        <a class="page-link" th:href="@{/admin/pgs(page=${pgPage.number + 1}, q=${q})}">Next</a>
+      </li>
+    </ul>
+  </nav>
+
+</div>
+
+<!-- Add PG Modal -->
+<div class="modal fade" id="addPgModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form th:action="@{/admin/pgs/add}" method="post" enctype="multipart/form-data">
+        <div class="modal-header">
+          <h5 class="modal-title">Add PG</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Name</label>
+            <input class="form-control" name="name" required>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Location</label>
+            <input class="form-control" name="location" required>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Rating</label>
+            <input type="number" step="0.1" min="0" max="5" class="form-control" name="rating" required>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Image</label>
+            <input type="file" class="form-control" name="imageFile" accept="image/*" required>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal" type="button">Cancel</button>
+          <button class="btn btn-primary" type="submit">Add PG</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Modal -->
+<div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-sm">
+    <div class="modal-content">
+      <form th:action="@{/admin/pgs/delete}" method="post">
+        <div class="modal-header">
+          <h5 class="modal-title">Confirm Delete</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+
+        <div class="modal-body">
+          <input type="hidden" name="id" id="deleteId">
+          <p>Delete <strong id="deleteName"></strong>?</p>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal" type="button">Cancel</button>
+          <button class="btn btn-danger" type="submit">Delete</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  var delModal = document.getElementById('confirmDeleteModal');
+  delModal.addEventListener('show.bs.modal', function (event) {
+    var btn = event.relatedTarget;
+    document.getElementById('deleteId').value = btn.getAttribute('data-id');
+    document.getElementById('deleteName').textContent = btn.getAttribute('data-name');
+  });
+</script>
+
+</body>
+</html>
+

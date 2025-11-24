@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+  <title>Admin - Colleges</title>
+  <link href="/css/bootstrap.min.css" rel="stylesheet">
+  <script src="/js/bootstrap.bundle.min.js"></script>
+</head>
+
+<body class="bg-light">
+
+<div class="container py-4">
+
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h3>Colleges (Admin)</h3>
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCollegeModal">Add College</button>
+  </div>
+
+  <form class="row g-2 mb-3" th:action="@{/admin/colleges}" method="get">
+    <div class="col-auto">
+      <input type="text" name="q" class="form-control" placeholder="Search name or location" th:value="${q}">
+    </div>
+
+    <div class="col-auto">
+      <button class="btn btn-outline-primary">Search</button>
+    </div>
+  </form>
+
+  <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
+  <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
+
+  <div class="table-responsive">
+    <table class="table table-hover align-middle">
+
+      <thead>
+        <tr>
+          <th>Image</th>
+          <th>College Name</th>
+          <th>Location</th>
+          <th>Rating</th>
+          <th>Created</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        <tr th:each="c : ${collegePage.content}">
+          <td style="width:130px">
+            <img th:src="@{'/college/image/' + ${c.id}}"
+                 style="width:120px;height:80px;object-fit:cover;border-radius:6px;">
+          </td>
+
+          <td th:text="${c.name}"></td>
+          <td th:text="${c.location}"></td>
+          <td>⭐ <span th:text="${c.rating}"></span></td>
+
+          <td th:text="${#temporals.format(c.createdAt, 'dd-MMM-yyyy HH:mm')}"></td>
+
+          <td>
+            <a th:href="@{'/admin/colleges/edit/' + ${c.id}}" class="btn btn-sm btn-outline-secondary">Edit</a>
+
+            <button class="btn btn-sm btn-danger"
+              data-bs-toggle="modal"
+              data-bs-target="#deleteModal"
+              th:attr="data-id=${c.id}, data-name=${c.name}">
+              Delete
+            </button>
+          </td>
+
+        </tr>
+      </tbody>
+
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  <nav th:if="${collegePage.totalPages > 1}">
+    <ul class="pagination">
+      <li class="page-item" th:classappend="${collegePage.first}? 'disabled'">
+        <a class="page-link" th:href="@{/admin/colleges(page=${collegePage.number - 1}, q=${q})}">Prev</a>
+      </li>
+
+      <li class="page-item"
+          th:each="p : ${#numbers.sequence(0, collegePage.totalPages - 1)}"
+          th:classappend="${p == collegePage.number}? 'active'">
+        <a class="page-link" th:href="@{/admin/colleges(page=${p}, q=${q})}" th:text="${p + 1}"></a>
+      </li>
+
+      <li class="page-item" th:classappend="${collegePage.last}? 'disabled'">
+        <a class="page-link" th:href="@{/admin/colleges(page=${collegePage.number + 1}, q=${q})}">Next</a>
+      </li>
+    </ul>
+  </nav>
+
+</div>
+
+<!-- Add College Modal -->
+<div class="modal fade" id="addCollegeModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+
+      <form th:action="@{/admin/colleges/add}" method="post" enctype="multipart/form-data">
+
+        <div class="modal-header">
+          <h5>Add College</h5>
+          <button class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+
+        <div class="modal-body">
+
+          <div class="mb-3">
+            <label class="form-label">College Name</label>
+            <input class="form-control" name="name" required>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Location</label>
+            <input class="form-control" name="location" required>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Rating</label>
+            <input type="number" step="0.1" min="0" max="5" class="form-control" name="rating" required>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Image</label>
+            <input type="file" class="form-control" name="imageFile" accept="image/*" required>
+          </div>
+
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button class="btn btn-primary">Add College</button>
+        </div>
+
+      </form>
+
+    </div>
+  </div>
+</div>
+
+<!-- Delete Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+  <div class="modal-dialog modal-sm">
+    <div class="modal-content">
+
+      <form th:action="@{/admin/colleges/delete}" method="post">
+
+        <div class="modal-header">
+          <h5 class="modal-title">Delete College</h5>
+          <button class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+
+        <div class="modal-body">
+          <input type="hidden" id="deleteId" name="id">
+          <p>Delete <strong id="deleteName"></strong>?</p>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button class="btn btn-danger">Delete</button>
+        </div>
+
+      </form>
+
+    </div>
+  </div>
+</div>
+
+<script>
+var delModal = document.getElementById('deleteModal');
+delModal.addEventListener('show.bs.modal', function (e) {
+  var btn = e.relatedTarget;
+  document.getElementById('deleteId').value = btn.getAttribute('data-id');
+  document.getElementById('deleteName').textContent = btn.getAttribute('data-name');
+});
+</script>
+
+</body>
+</html>

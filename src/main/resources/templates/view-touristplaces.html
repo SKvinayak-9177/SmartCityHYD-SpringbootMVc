@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <title>TouristPlaces</title>
+  <link href="/css/bootstrap.min.css" rel="stylesheet">
+  <script src="/js/bootstrap.bundle.min.js"></script>
+  <style>
+    .card-img-top { height: 200px; object-fit: cover; }
+  </style>
+</head>
+<body class="bg-light">
+  <div class="container py-5">
+    <h2 class="mb-4">Available TouristPlaces</h2>
+
+    <form class="row g-2 mb-3" th:action="@{/view-touristplaces}" method="get">
+      <div class="col-md-6">
+        <input name="q" class="form-control" placeholder="Search by name or location" th:value="${q}">
+      </div>
+      <div class="col-auto">
+        <button class="btn btn-primary">Search</button>
+      </div>
+    </form>
+
+    <div class="row g-4">
+      <div class="col-12 col-sm-6 col-md-4 col-lg-3" th:each="t : ${touristplacesPage.content}">
+        <a th:href="@{'/tourist/details/' + ${t.slug}}" class="text-decoration-none text-dark">
+          <div class="card h-100 shadow-sm">
+            <img th:src="@{'/tourist/image/' + ${t.id}}" class="card-img-top" alt="touristplace image"/>
+            <div class="card-body">
+              <h5 class="card-title" th:text="${t.name}">TouristPlace Name</h5>
+              <p class="card-text mb-1"><strong>Location:</strong> <span th:text="${t.location}"></span></p>
+              <p class="card-text">Rating: ⭐ <span th:text="${t.rating}"></span></p>
+            </div>
+          </div>
+        </a>
+      </div>
+    </div>
+
+    <!-- pagination -->
+    <nav th:if="${touristplacesPage.totalPages > 1}" class="mt-4">
+      <ul class="pagination justify-content-center">
+        <li class="page-item" th:classappend="${touristplacesPage.first}? 'disabled'">
+          <a class="page-link" th:href="@{/view-touristplaces(page=${touristplacesPage.number - 1}, q=${q})}">Prev</a>
+        </li>
+        <li th:each="p : ${#numbers.sequence(0, touristplacesPage.totalPages - 1)}" class="page-item" th:classappend="${p == touristplacesPage.number}? 'active'">
+          <a class="page-link" th:href="@{/view-touristplaces(page=${p}, q=${q})}" th:text="${p + 1}"></a>
+        </li>
+        <li class="page-item" th:classappend="${touristplacesPage.last}? 'disabled'">
+          <a class="page-link" th:href="@{/view-touristplaces(page=${touristplacesPage.number + 1}, q=${q})}">Next</a>
+        </li>
+      </ul>
+    </nav>
+
+  </div>
+</body>
+</html>

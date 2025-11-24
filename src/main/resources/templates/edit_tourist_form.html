@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Edit Tourist Place</title>
+    <link href="/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+
+<div class="container py-4">
+
+    <h3>Edit Tourist Place</h3>
+    <a href="/admin/tourist" class="btn btn-secondary mb-3">← Back</a>
+
+    <form th:action="@{'/admin/tourist/update/' + ${place.id}}"
+          method="post"
+          enctype="multipart/form-data"
+          class="card p-4 shadow">
+
+        <div class="mb-3">
+            <label>Name</label>
+            <input class="form-control" name="name" th:value="${place.name}" required>
+        </div>
+
+        <div class="mb-3">
+            <label>Location</label>
+            <input class="form-control" name="location" th:value="${place.location}" required>
+        </div>
+
+        <div class="mb-3">
+            <label>Rating</label>
+            <input type="number" min="0" max="5" step="0.1"
+                   class="form-control" name="rating" th:value="${place.rating}">
+        </div>
+
+        <div class="mb-3">
+            <label>Current Image</label><br>
+            <img th:src="@{'/tourist/image/' + ${place.id}}"
+                 style="width:220px;height:130px;object-fit:cover">
+        </div>
+
+        <div class="mb-3">
+            <label>Upload New Image</label>
+            <input type="file" class="form-control" name="imageFile" accept="image/*">
+        </div>
+
+        <button class="btn btn-primary">Update</button>
+    </form>
+</div>
+</body>
+</html>

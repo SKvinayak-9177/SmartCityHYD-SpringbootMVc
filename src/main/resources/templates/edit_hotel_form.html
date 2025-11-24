@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Edit Hotel</title>
+    <link href="/css/bootstrap.min.css" rel="stylesheet">
+    <script src="/js/bootstrap.bundle.min.js"></script>
+</head>
+<body class="bg-light">
+
+<div class="container py-4">
+
+    <h3 class="mb-3">Edit Hotel</h3>
+
+    <a href="/admin/hotels" class="btn btn-secondary mb-3">← Back to Hotels</a>
+
+    <form th:action="@{'/admin/hotels/update/' + ${hotel.id}}"
+          method="post"
+          enctype="multipart/form-data"
+          class="card p-4 shadow">
+
+        <div class="mb-3">
+            <label class="form-label">Hotel Name</label>
+            <input type="text" class="form-control" name="name" th:value="${hotel.name}" required>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Location</label>
+            <input type="text" class="form-control" name="location" th:value="${hotel.location}" required>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Rating</label>
+            <input type="number" class="form-control" name="rating" 
+                   min="0" max="5" step="0.1"
+                   th:value="${hotel.rating}" required>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Current Image</label><br>
+            <img th:src="@{'/hotel/image/' + ${hotel.id}}"
+                 style="width:220px;height:130px;object-fit:cover;border-radius:6px;">
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Upload New Image (Optional)</label>
+            <input type="file" class="form-control" name="imageFile" accept="image/*">
+        </div>
+
+        <button type="submit" class="btn btn-primary">Update Hotel</button>
+    </form>
+
+</div>
+
+</body>
+</html>

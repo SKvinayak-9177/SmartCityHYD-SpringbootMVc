@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Edit Restaurant</title>
+    <link href="/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+
+<div class="container py-4">
+
+    <h3>Edit Restaurant</h3>
+    <a href="/admin/restaurants" class="btn btn-secondary mb-3">← Back</a>
+
+    <form th:action="@{'/admin/restaurants/update/' + ${restaurant.id}}"
+          method="post"
+          enctype="multipart/form-data"
+          class="card p-4 shadow">
+
+        <div class="mb-3">
+            <label>Name</label>
+            <input class="form-control" name="name" th:value="${restaurant.name}" required>
+        </div>
+
+        <div class="mb-3">
+            <label>Location</label>
+            <input class="form-control" name="location" th:value="${restaurant.location}" required>
+        </div>
+
+        <div class="mb-3">
+            <label>Rating</label>
+            <input type="number" class="form-control" step="0.1" min="0" max="5" 
+                   name="rating" th:value="${restaurant.rating}">
+        </div>
+
+        <div class="mb-3">
+            <label>Timings</label>
+            <input class="form-control" name="timings" th:value="${restaurant.timings}">
+        </div>
+
+        <div class="mb-3">
+            <label>Current Image</label><br>
+            <img th:src="@{'/restaurant/image/' + ${restaurant.id}}" 
+                 style="width:220px;height:130px;object-fit:cover">
+        </div>
+
+        <div class="mb-3">
+            <label>Upload New Image</label>
+            <input type="file" class="form-control" name="imageFile" accept="image/*">
+        </div>
+
+        <button class="btn btn-primary">Update</button>
+    </form>
+</div>
+</body>
+</html>
