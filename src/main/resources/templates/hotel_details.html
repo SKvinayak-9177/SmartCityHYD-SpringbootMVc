@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <title th:text="${hotel.name} + ' - Rooms'">Hotel Details</title>
+  <link href="/css/bootstrap.min.css" rel="stylesheet">
+  <script src="/js/bootstrap.bundle.min.js"></script>
+</head>
+<body class="bg-light">
+
+<div class="container py-4">
+
+  <!-- Back + title -->
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+      <a class="btn btn-outline-secondary btn-sm" th:href="@{/admin/hotels}">&larr; Back to Hotels</a>
+    </div>
+    <h3 th:text="${hotel.name} + ' - Rooms'">Hotel Rooms</h3>
+  </div>
+
+  <!-- Hero card with hotel info -->
+  <div class="card mb-4 shadow-sm">
+    <div class="row g-0">
+      <div class="col-md-4">
+        <img th:src="@{'/hotel/image/' + ${hotel.id}}"
+             class="img-fluid h-100 w-100"
+             style="object-fit:cover;border-top-left-radius:.25rem;border-bottom-left-radius:.25rem;">
+      </div>
+      <div class="col-md-8">
+        <div class="card-body">
+          <h3 class="card-title" th:text="${hotel.name}"></h3>
+          <p class="mb-1">
+            <strong>Location:</strong>
+            <span th:text="${hotel.location}"></span>
+          </p>
+          <p class="mb-1">
+            <strong>Rating:</strong>
+            ⭐ <span th:text="${hotel.rating}"></span>
+          </p>
+          <p class="mb-1">
+            <strong>Slug:</strong>
+            <span class="text-muted" th:text="${hotel.slug}"></span>
+          </p>
+          <p class="text-muted mb-0">
+            <strong>Created:</strong>
+            <span th:text="${#temporals.format(hotel.createdAt, 'dd-MMM-yyyy HH:mm')}"></span>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Rooms toolbar -->
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h5 class="mb-0">Rooms</h5>
+    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addRoomModal">
+      Add Room
+    </button>
+  </div>
+
+  <!-- Rooms table -->
+  <div class="card shadow-sm">
+    <div class="card-body p-0">
+      <div class="table-responsive mb-0">
+        <table class="table table-hover mb-0 align-middle">
+          <thead class="table-light">
+            <tr>
+              <th>#</th>
+              <th>Room No</th>
+              <th>Capacity</th>
+              <th>Amenities</th>
+              <th>Price / Day</th>
+              <th>Status</th>
+              <th style="width:140px;">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr th:if="${#lists.isEmpty(rooms)}">
+              <td colspan="7" class="text-center py-4 text-muted">
+                No rooms added yet. Use "Add Room" to create one.
+              </td>
+            </tr>
+            <tr th:each="r, stat : ${rooms}">
+              <td th:text="${stat.count}"></td>
+              <td th:text="${r.roomNo}"></td>
+              <td th:text="${r.capacity}"></td>
+              <td th:text="${r.amenities}"></td>
+              <td>
+                ₹ <span th:text="${r.pricePerDay}"></span>
+              </td>
+              <td>
+                <span class="badge"
+                      th:classappend="${r.status == 'AVAILABLE'} ? 'bg-success' 
+                                    : (${r.status == 'BOOKED'} ? 'bg-warning text-dark' : 'bg-secondary')"
+                      th:text="${r.status}"></span>
+              </td>
+              <td>
+                <button class="btn btn-sm btn-outline-secondary"
+                        data-bs-toggle="modal"
+                        data-bs-target="#editRoomModal"
+                        th:attr="data-id=${r.id},
+                                 data-roomno=${r.roomNo},
+                                 data-capacity=${r.capacity},
+                                 data-amenities=${r.amenities},
+                                 data-price=${r.pricePerDay},
+                                 data-status=${r.status}">
+                  Edit
+                </button>
+                <button class="btn btn-sm btn-danger"
+                        data-bs-toggle="modal"
+                        data-bs-target="#deleteRoomModal"
+                        th:attr="data-id=${r.id}, data-roomno=${r.roomNo}">
+                  Delete
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Add Room Modal -->
+<div class="modal fade" id="addRoomModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form th:action="@{'/admin/hotels/' + ${hotel.id} + '/rooms/add'}" method="post">
+        <div class="modal-header">
+          <h5 class="modal-title">Add Room</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+
+          <div class="mb-3">
+            <label class="form-label">Room No</label>
+            <input class="form-control" name="roomNo" required>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Capacity</label>
+            <input type="number" min="1" class="form-control" name="capacity" required>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Amenities</label>
+            <textarea class="form-control" name="amenities"
+                      placeholder="AC, WiFi, TV, Breakfast..." rows="2"></textarea>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Price per day (₹)</label>
+            <input type="number" min="0" step="0.01"
+                   class="form-control" name="pricePerDay" required>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Status</label>
+            <select class="form-select" name="status" required>
+              <option value="AVAILABLE">AVAILABLE</option>
+              <option value="BOOKED">BOOKED</option>
+              <option value="MAINTENANCE">MAINTENANCE</option>
+            </select>
+          </div>
+
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal" type="button">Cancel</button>
+          <button class="btn btn-primary" type="submit">Add Room</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Room Modal -->
+<div class="modal fade" id="editRoomModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form th:action="@{'/admin/hotels/' + ${hotel.id} + '/rooms/update'}" method="post">
+        <div class="modal-header">
+          <h5 class="modal-title">Edit Room</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+
+          <input type="hidden" name="id" id="editRoomId">
+
+          <div class="mb-3">
+            <label class="form-label">Room No</label>
+            <input class="form-control" name="roomNo" id="editRoomNo" required>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Capacity</label>
+            <input type="number" min="1" class="form-control"
+                   name="capacity" id="editCapacity" required>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Amenities</label>
+            <textarea class="form-control" name="amenities"
+                      id="editAmenities" rows="2"></textarea>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Price per day (₹)</label>
+            <input type="number" min="0" step="0.01"
+                   class="form-control" name="pricePerDay" id="editPrice" required>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Status</label>
+            <select class="form-select" name="status" id="editStatus" required>
+              <option value="AVAILABLE">AVAILABLE</option>
+              <option value="BOOKED">BOOKED</option>
+              <option value="MAINTENANCE">MAINTENANCE</option>
+            </select>
+          </div>
+
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal" type="button">Cancel</button>
+          <button class="btn btn-primary" type="submit">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Room Modal -->
+<div class="modal fade" id="deleteRoomModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-sm">
+    <div class="modal-content">
+      <form th:action="@{'/admin/hotels/' + ${hotel.id} + '/rooms/delete'}" method="post">
+        <div class="modal-header">
+          <h5 class="modal-title">Delete Room</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" name="roomId" id="deleteRoomId">
+          <p>Delete room <strong id="deleteRoomNo"></strong>?</p>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal" type="button">Cancel</button>
+          <button class="btn btn-danger" type="submit">Delete</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  var editModal = document.getElementById('editRoomModal');
+  editModal.addEventListener('show.bs.modal', function (event) {
+    var button = event.relatedTarget;
+    document.getElementById('editRoomId').value = button.getAttribute('data-id');
+    document.getElementById('editRoomNo').value = button.getAttribute('data-roomno');
+    document.getElementById('editCapacity').value = button.getAttribute('data-capacity');
+    document.getElementById('editAmenities').value = button.getAttribute('data-amenities') || '';
+    document.getElementById('editPrice').value = button.getAttribute('data-price');
+    document.getElementById('editStatus').value = button.getAttribute('data-status');
+  });
+
+  var deleteModal = document.getElementById('deleteRoomModal');
+  deleteModal.addEventListener('show.bs.modal', function (event) {
+    var button = event.relatedTarget;
+    document.getElementById('deleteRoomId').value = button.getAttribute('data-id');
+    document.getElementById('deleteRoomNo').textContent = button.getAttribute('data-roomno');
+  });
+</script>
+
+</body>
+</html>

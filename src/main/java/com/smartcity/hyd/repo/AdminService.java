@@ -1,5 +1,6 @@
 package com.smartcity.hyd.repo;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
@@ -19,6 +20,12 @@ public interface AdminService {
     Hotel saveHotel(Hotel hotel);
     Optional<Hotel> findHotelById(Long id);
     void deleteHotel(Long id);
+    
+    void createRoomsTableForHotel(String slug);
+    java.util.List<HotelRoom> getRoomsForHotel(String slug);
+    void addRoomToHotel(String slug, HotelRoom room);
+    void updateRoomInHotel(String slug, HotelRoom room);
+    void deleteRoomInHotel(String slug, Long roomId);
     
     Page<College> searchColleges(String q, Pageable pageable);
     College saveCollege(College college);

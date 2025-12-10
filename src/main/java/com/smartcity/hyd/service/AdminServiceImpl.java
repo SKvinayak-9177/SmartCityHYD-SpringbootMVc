@@ -1,9 +1,14 @@
 package com.smartcity.hyd.service;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.*;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Service;
 
 import com.smartcity.hyd.model.*;
@@ -18,6 +23,8 @@ public class AdminServiceImpl implements AdminService {
     @Autowired private TouristPlaceRepo touristRepo;
     @Autowired private BusinessVenueRepo businessRepo;
     @Autowired private CollegeRepo collegeRepo;
+
+    @Autowired private JdbcTemplate jdbcTemplate; // for dynamic room tables
 
     // ----- counts -----
     @Override
@@ -77,7 +84,8 @@ public class AdminServiceImpl implements AdminService {
     @Override
     public Page<BusinessVenue> searchBusinessVenues(String q, Pageable pageable) {
         if (q == null || q.isBlank()) return businessRepo.findAll(pageable);
-        return businessRepo.findByNameContainingIgnoreCaseOrBusinessTypeContainingIgnoreCaseOrLocationContainingIgnoreCase(q, q, q, pageable);
+        return businessRepo.findByNameContainingIgnoreCaseOrBusinessTypeContainingIgnoreCaseOrLocationContainingIgnoreCase(
+                q, q, q, pageable);
     }
     @Override public BusinessVenue saveBusinessVenue(BusinessVenue b) { return businessRepo.save(b); }
     @Override public Optional<BusinessVenue> findBusinessVenueById(Long id) { return businessRepo.findById(id); }
@@ -92,4 +100,82 @@ public class AdminServiceImpl implements AdminService {
     @Override public College saveCollege(College c) { return collegeRepo.save(c); }
     @Override public Optional<College> findCollegeById(Long id) { return collegeRepo.findById(id); }
     @Override public void deleteCollege(Long id) { collegeRepo.deleteById(id); }
+
+    // =============== HOTEL ROOMS (dynamic tables) ===============
+
+    private String roomsTableName(String slug) {
+        // extra safety: only allow [a-z0-9_]
+        String safeSlug = slug.toLowerCase().replaceAll("[^a-z0-9_]", "_");
+        return "rooms_" + safeSlug;
+    }
+
+    @Override
+    public void createRoomsTableForHotel(String slug) {
+        String table = roomsTableName(slug);
+        String sql = "CREATE TABLE IF NOT EXISTS " + table + " ("
+                + "id BIGINT PRIMARY KEY AUTO_INCREMENT, "
+                + "room_no VARCHAR(50) UNIQUE NOT NULL, "
+                + "capacity INT NOT NULL, "
+                + "amenities VARCHAR(255), "
+                + "price_per_day DECIMAL(10,2) NOT NULL, "
+                + "status VARCHAR(20) NOT NULL"
+                + ")";
+        jdbcTemplate.execute(sql);
+    }
+
+    @Override
+    public List<HotelRoom> getRoomsForHotel(String slug) {
+        String table = roomsTableName(slug);
+        String sql = "SELECT id, room_no, capacity, amenities, price_per_day, status FROM " + table + " ORDER BY id";
+        return jdbcTemplate.query(sql, new RowMapper<HotelRoom>() {
+            @Override
+            public HotelRoom mapRow(ResultSet rs, int rowNum) throws SQLException {
+                HotelRoom dto = new HotelRoom();
+                dto.setId(rs.getLong("id"));
+                dto.setRoomNo(rs.getInt("room_no"));
+                dto.setCapacity(rs.getInt("capacity"));
+                dto.setAmenities(rs.getString("amenities"));
+                dto.setPricePerDay(rs.getDouble("price_per_day"));
+                dto.setStatus(rs.getString("status"));
+                return dto;
+            }
+        });
+    }
+
+    @Override
+    public void addRoomToHotel(String slug, HotelRoom room) {
+        String table = roomsTableName(slug);
+        String sql = "INSERT INTO " + table
+                + " (room_no, capacity, amenities, price_per_day, status) "
+                + "VALUES (?, ?, ?, ?, ?)";
+        jdbcTemplate.update(sql,
+                room.getRoomNo(),
+                room.getCapacity(),
+                room.getAmenities(),
+                room.getPricePerDay(),
+                room.getStatus());
+    }
+
+    @Override
+    public void updateRoomInHotel(String slug, HotelRoom room) {
+        if (room.getId() == null) return;
+        String table = roomsTableName(slug);
+        String sql = "UPDATE " + table
+                + " SET room_no = ?, capacity = ?, amenities = ?, price_per_day = ?, status = ? "
+                + "WHERE id = ?";
+        jdbcTemplate.update(sql,
+                room.getRoomNo(),
+                room.getCapacity(),
+                room.getAmenities(),
+                room.getPricePerDay(),
+                room.getStatus(),
+                room.getId());
+    }
+
+    @Override
+    public void deleteRoomInHotel(String slug, Long roomId) {
+        String table = roomsTableName(slug);
+        String sql = "DELETE FROM " + table + " WHERE id = ?";
+        jdbcTemplate.update(sql, roomId);
+    }
 }

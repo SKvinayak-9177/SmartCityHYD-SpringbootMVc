@@ -12,8 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.smartcity.hyd.model.*;
-import com.smartcity.hyd.service.*;
-import com.smartcity.hyd.repo.*;
+import com.smartcity.hyd.repo.AdminService;
 
 @Controller
 @RequestMapping("/admin")
@@ -33,7 +32,8 @@ public class AdminController {
         return "admin_dashboard";
     }
 
- // ---------------- Hotels ----------------
+    // ==================== HOTELS ====================
+
     @GetMapping("/hotels")
     public String hotelsPage(@RequestParam(required=false) String q,
                              @RequestParam(defaultValue="0") int page,
@@ -57,12 +57,31 @@ public class AdminController {
         h.setName(name);
         h.setLocation(location);
         h.setRating(rating);
-        if (!imageFile.isEmpty()) h.setImage(imageFile.getBytes());
-        h.setSlug(generateSlug(name));
 
-        adminService.saveHotel(h);
+        if (!imageFile.isEmpty()) {
+            h.setImage(imageFile.getBytes());
+        }
+
+        // Step 1: initial slug without ID (required because slug cannot be null)
+        String tempSlug = generateSlug(name);
+        h.setSlug(tempSlug);
+
+        // Step 2: first save (OK because slug is not null)
+        Hotel saved = adminService.saveHotel(h);
+
+        // Step 3: now update slug with unique ID (recommended)
+        String finalSlug = tempSlug + "-" + saved.getId();
+        saved.setSlug(finalSlug);
+
+        // Step 4: save again
+        adminService.saveHotel(saved);
+
+        // Step 5: create dynamic room table
+        adminService.createRoomsTableForHotel(finalSlug);
+
         return "redirect:/admin/hotels";
     }
+
 
     @GetMapping("/hotels/edit/{id}")
     public String editHotelForm(@PathVariable Long id, Model model) {
@@ -82,7 +101,7 @@ public class AdminController {
         h.setLocation(location);
         h.setRating(rating);
         if (imageFile != null && !imageFile.isEmpty()) h.setImage(imageFile.getBytes());
-        h.setSlug(generateSlug(name));
+        // DO NOT change slug here – it must stay the same for the room table.
 
         adminService.saveHotel(h);
         return "redirect:/admin/hotels";
@@ -90,12 +109,58 @@ public class AdminController {
 
     @PostMapping("/hotels/delete")
     public String deleteHotel(@RequestParam Long id) {
+        // note: this does NOT drop the dynamic room table – you can add that if you want.
         adminService.deleteHotel(id);
         return "redirect:/admin/hotels";
     }
 
+    // ----- Hotel details + rooms page -----
 
-    // ---------------- Restaurants ----------------
+    @GetMapping("/hotels/{id}")
+    public String hotelDetails(@PathVariable Long id, Model model) {
+        Hotel hotel = adminService.findHotelById(id).orElseThrow();
+        String slug = hotel.getSlug();
+
+        // safety: ensure table exists
+        adminService.createRoomsTableForHotel(slug);
+
+        java.util.List<HotelRoom> rooms = adminService.getRoomsForHotel(slug);
+
+        model.addAttribute("hotel", hotel);
+        model.addAttribute("rooms", rooms);
+        model.addAttribute("roomForm", new HotelRoom());
+        return "hotel_details";
+    }
+
+    @PostMapping("/hotels/{id}/rooms/add")
+    public String addRoom(@PathVariable Long id,
+                          @ModelAttribute("roomForm") HotelRoom room) {
+
+        Hotel hotel = adminService.findHotelById(id).orElseThrow();
+        adminService.addRoomToHotel(hotel.getSlug(), room);
+        return "redirect:/admin/hotels/" + id;
+    }
+
+    @PostMapping("/hotels/{id}/rooms/update")
+    public String updateRoom(@PathVariable Long id,
+                             @ModelAttribute HotelRoom room) {
+
+        Hotel hotel = adminService.findHotelById(id).orElseThrow();
+        adminService.updateRoomInHotel(hotel.getSlug(), room);
+        return "redirect:/admin/hotels/" + id;
+    }
+
+    @PostMapping("/hotels/{id}/rooms/delete")
+    public String deleteRoom(@PathVariable Long id,
+                             @RequestParam Long roomId) {
+
+        Hotel hotel = adminService.findHotelById(id).orElseThrow();
+        adminService.deleteRoomInHotel(hotel.getSlug(), roomId);
+        return "redirect:/admin/hotels/" + id;
+    }
+
+    // ==================== RESTAURANTS ====================
+
     @GetMapping("/restaurants")
     public String restaurantsPage(@RequestParam(required=false) String q,
                                   @RequestParam(defaultValue="0") int page,
@@ -150,7 +215,8 @@ public class AdminController {
         return "redirect:/admin/restaurants";
     }
 
-    // ---------------- PGs ----------------
+    // ==================== PGs ====================
+
     @GetMapping("/pgs")
     public String pgsPage(@RequestParam(required=false) String q,
                           @RequestParam(defaultValue="0") int page,
@@ -203,7 +269,8 @@ public class AdminController {
         return "redirect:/admin/pgs";
     }
 
-    // ---------------- Tourist Places ----------------
+    // ==================== TOURIST PLACES ====================
+
     @GetMapping("/tourist-places")
     public String touristPage(@RequestParam(required=false) String q,
                               @RequestParam(defaultValue="0") int page,
@@ -256,7 +323,8 @@ public class AdminController {
         return "redirect:/admin/tourist-places";
     }
 
- // ---------------- Business Venues ----------------
+    // ==================== BUSINESS VENUES ====================
+
     @GetMapping("/business-venues")
     public String businessPage(@RequestParam(required=false) String q,
                                @RequestParam(defaultValue="0") int page,
@@ -267,7 +335,7 @@ public class AdminController {
         Page<BusinessVenue> bv = adminService.searchBusinessVenues(q, pageable);
         model.addAttribute("venuePage", bv);
         model.addAttribute("q", q);
-        return "admin_businessvenues"; // must match file name
+        return "admin_businessvenues";
     }
 
     @PostMapping("/business/add")
@@ -277,31 +345,28 @@ public class AdminController {
                               @RequestParam(required=false) String venueStartDate,
                               @RequestParam(value="imageFile", required=false) MultipartFile imageFile,
                               Model model) throws IOException {
-
         BusinessVenue b = new BusinessVenue();
-        b.setName(name);
-        b.setBusinessType(businessType);
-        b.setLocation(location);
-
-        if (venueStartDate != null && !venueStartDate.isBlank()) {
-            b.setVenueStartDate(LocalDate.parse(venueStartDate));
+        b.setName(name); b.setBusinessType(businessType); b.setLocation(location);
+        try {
+            if (venueStartDate != null && !venueStartDate.isBlank()) {
+                b.setVenueStartDate(LocalDate.parse(venueStartDate));
+            }
+        } catch (DateTimeParseException ex) {
+            model.addAttribute("errorMessage", "Invalid date format. Use yyyy-MM-dd");
+            return "admin_businessvenues";
         }
-
-        if (imageFile != null && !imageFile.isEmpty()) {
-            b.setImage(imageFile.getBytes());
-        }
-
+        if (imageFile != null && !imageFile.isEmpty()) b.setImage(imageFile.getBytes());
         b.setSlug(generateSlug(name));
         adminService.saveBusinessVenue(b);
         return "redirect:/admin/business-venues";
     }
+
     @GetMapping("/business/edit/{id}")
     public String editBusinessForm(@PathVariable Long id, Model model) {
-        BusinessVenue venue = adminService.findBusinessVenueById(id)
-                                          .orElseThrow(() -> new RuntimeException("Venue Not Found"));
-        model.addAttribute("business", venue);
+        model.addAttribute("business", adminService.findBusinessVenueById(id).orElse(null));
         return "edit_business_form";
     }
+
     @PostMapping("/business/update/{id}")
     public String updateBusiness(@PathVariable Long id,
                                  @RequestParam String name,
@@ -310,44 +375,32 @@ public class AdminController {
                                  @RequestParam(required=false) String venueStartDate,
                                  @RequestParam(value="imageFile", required=false) MultipartFile imageFile,
                                  Model model) throws IOException {
-
-        BusinessVenue b = adminService.findBusinessVenueById(id)
-                                      .orElseThrow(() -> new RuntimeException("Venue Not Found"));
-
-        b.setName(name);
-        b.setBusinessType(businessType);
-        b.setLocation(location);
-
+        BusinessVenue b = adminService.findBusinessVenueById(id).orElseThrow();
+        b.setName(name); b.setBusinessType(businessType); b.setLocation(location);
         try {
             if (venueStartDate != null && !venueStartDate.isBlank()) {
                 b.setVenueStartDate(LocalDate.parse(venueStartDate));
             } else {
                 b.setVenueStartDate(null);
             }
-        } catch (Exception ex) {
+        } catch (DateTimeParseException ex) {
             model.addAttribute("errorMessage", "Invalid date format. Use yyyy-MM-dd");
-            model.addAttribute("business", b);
             return "edit_business_form";
         }
-
-        if (imageFile != null && !imageFile.isEmpty()) {
-            b.setImage(imageFile.getBytes());
-        }
-
+        if (imageFile != null && !imageFile.isEmpty()) b.setImage(imageFile.getBytes());
         b.setSlug(generateSlug(name));
-
         adminService.saveBusinessVenue(b);
-
         return "redirect:/admin/business-venues";
     }
+
     @PostMapping("/business/delete")
     public String deleteBusiness(@RequestParam Long id) {
         adminService.deleteBusinessVenue(id);
         return "redirect:/admin/business-venues";
     }
 
+    // ==================== COLLEGES ====================
 
-    // ---------------- Colleges ----------------
     @GetMapping("/colleges")
     public String collegesPage(@RequestParam(required=false) String q,
                                @RequestParam(defaultValue="0") int page,
@@ -356,7 +409,7 @@ public class AdminController {
 
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         Page<College> colleges = adminService.searchColleges(q, pageable);
-        model.addAttribute("collegePage", colleges);
+        model.addAttribute("collegesPage", colleges);
         model.addAttribute("q", q);
         return "admin_colleges";
     }
@@ -403,6 +456,9 @@ public class AdminController {
     // helper
     private String generateSlug(String name) {
         if (name == null) return null;
-        return name.trim().toLowerCase().replaceAll("[^a-z0-9\\s-]", "").replaceAll("\\s+","-");
+        return name.trim()
+                   .toLowerCase()
+                   .replaceAll("[^a-z0-9\\s-]", "")
+                   .replaceAll("\\s+","-");
     }
 }

@@ -19,14 +19,15 @@
   <!-- Search -->
   <form class="row g-2 mb-3" th:action="@{/admin/hotels}" method="get">
     <div class="col-auto">
-      <input type="text" name="q" placeholder="Search name or location" class="form-control" th:value="${q}">
+      <input type="text" name="q" placeholder="Search name or location"
+             class="form-control" th:value="${q}">
     </div>
     <div class="col-auto">
       <button class="btn btn-outline-primary">Search</button>
     </div>
   </form>
 
-  <!-- Alerts for success/errors -->
+  <!-- Alerts for success/errors (optional) -->
   <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
   <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
 
@@ -44,25 +45,34 @@
         </tr>
       </thead>
       <tbody>
-        <tr th:each="h : ${hotelsPage.content}">
-          <td style="width:130px">
-            <img th:src="@{'/hotel/image/' + ${h.id}}" style="width:120px;height:80px;object-fit:cover;border-radius:6px;">
-          </td>
-          <td th:text="${h.name}"></td>
-          <td th:text="${h.location}"></td>
-          <td>⭐ <span th:text="${h.rating}"></span></td>
-          <td th:text="${#temporals.format(h.createdAt, 'dd-MMM-yyyy HH:mm')}"></td>
-          <td>
-            <a th:href="@{'/admin/hotels/edit/' + ${h.id}}" class="btn btn-sm btn-outline-secondary">Edit</a>
+			<tr th:each="h : ${hotelsPage.content}"
+				th:onclick="'window.location.href=\'/admin/hotels/' + ${h.id} + '\';'"
+				style="cursor: pointer;">
+				<td style="width:130px">
+					<img th:src="@{'/hotel/image/' + ${h.id}}"
+					 style="width:120px;height:80px;object-fit:cover;border-radius:6px;">
+				</td>
+				<td th:text="${h.name}"></td>
+				<td th:text="${h.location}"></td>
+				<td>⭐ <span th:text="${h.rating}"></span></td>
+					             <td th:text="${#temporals.format(h.createdAt, 'dd-MMM-yyyy HH:mm')}"></td>
+					             <td class="d-flex gap-1">
+					               <!-- Go to hotel details + rooms
+					               <a th:href="@{'/admin/hotels/' + ${h.id}}"
+					                  class="btn btn-sm btn-success">Rooms</a> -->
 
-            <!-- Delete button triggers confirm modal and passes id -->
-            <button class="btn btn-sm btn-danger" data-bs-toggle="modal"
-                    data-bs-target="#confirmDeleteModal" 
-                    th:attr="data-id=${h.id}, data-name=${h.name}">
-              Delete
-            </button>
-          </td>
-        </tr>
+					               <a th:href="@{'/admin/hotels/edit/' + ${h.id}}"
+					                  class="btn btn-sm btn-outline-secondary">Edit</a>
+
+					               <!-- Delete button triggers confirm modal and passes id -->
+					               <button class="btn btn-sm btn-danger"
+					                       data-bs-toggle="modal"
+					                       data-bs-target="#confirmDeleteModal"
+					                       th:attr="data-id=${h.id}, data-name=${h.name}">
+					                 Delete
+					               </button>
+					             </td>
+					           </tr>
       </tbody>
     </table>
   </div>
@@ -71,14 +81,19 @@
   <nav th:if="${hotelsPage.totalPages > 1}">
     <ul class="pagination">
       <li class="page-item" th:classappend="${hotelsPage.first}? 'disabled'">
-        <a class="page-link" th:href="@{/admin/hotels(page=${hotelsPage.number - 1}, q=${q})}">Prev</a>
+        <a class="page-link"
+           th:href="@{/admin/hotels(page=${hotelsPage.number - 1}, q=${q})}">Prev</a>
       </li>
-      <li class="page-item" th:each="p : ${#numbers.sequence(0, hotelsPage.totalPages - 1)}"
+      <li class="page-item"
+          th:each="p : ${#numbers.sequence(0, hotelsPage.totalPages - 1)}"
           th:classappend="${p == hotelsPage.number}? 'active'">
-        <a class="page-link" th:href="@{/admin/hotels(page=${p}, q=${q})}" th:text="${p + 1}"></a>
+        <a class="page-link"
+           th:href="@{/admin/hotels(page=${p}, q=${q})}"
+           th:text="${p + 1}"></a>
       </li>
       <li class="page-item" th:classappend="${hotelsPage.last}? 'disabled'">
-        <a class="page-link" th:href="@{/admin/hotels(page=${hotelsPage.number + 1}, q=${q})}">Next</a>
+        <a class="page-link"
+           th:href="@{/admin/hotels(page=${hotelsPage.number + 1}, q=${q})}">Next</a>
       </li>
     </ul>
   </nav>
@@ -105,15 +120,18 @@
           </div>
           <div class="mb-3">
             <label class="form-label">Rating</label>
-            <input type="number" step="0.1" max="5" min="0" class="form-control" name="rating" required>
+            <input type="number" step="0.1" max="5" min="0"
+                   class="form-control" name="rating" required>
           </div>
           <div class="mb-3">
             <label class="form-label">Image</label>
-            <input type="file" class="form-control" name="imageFile" accept="image/*" required>
+            <input type="file" class="form-control"
+                   name="imageFile" accept="image/*" required>
           </div>
         </div>
         <div class="modal-footer">
-          <button class="btn btn-secondary" data-bs-dismiss="modal" type="button">Cancel</button>
+          <button class="btn btn-secondary" data-bs-dismiss="modal"
+                  type="button">Cancel</button>
           <button type="submit" class="btn btn-primary">Add Hotel</button>
         </div>
       </form>
@@ -132,10 +150,11 @@
         </div>
         <div class="modal-body">
           <input type="hidden" name="id" id="deleteHotelId">
-          <p>Delete <strong id="deleteHotelName"></strong> ? This action cannot be undone.</p>
+          <p>Delete <strong id="deleteHotelName"></strong>? This action cannot be undone.</p>
         </div>
         <div class="modal-footer">
-          <button class="btn btn-secondary" data-bs-dismiss="modal" type="button">Cancel</button>
+          <button class="btn btn-secondary" data-bs-dismiss="modal"
+                  type="button">Cancel</button>
           <button type="submit" class="btn btn-danger">Delete</button>
         </div>
       </form>
@@ -144,7 +163,6 @@
 </div>
 
 <script>
-  // fill confirm modal with dataset attributes
   var confirmDeleteModal = document.getElementById('confirmDeleteModal');
   confirmDeleteModal.addEventListener('show.bs.modal', function (event) {
     var button = event.relatedTarget;
